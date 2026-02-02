@@ -110,7 +110,9 @@ python neural_collapse/analyze_nc.py
 
 ---
 
-## 👤 Author
+## 👤 Authors
 
-Vitor Odorissio  
+- **Vitor Odorissio Pereira**  
+- **Rian Radeck**  
+
 ENSTA Paris
