@@ -65,7 +65,7 @@ def evaluate(model, loader, criterion, device):
     return avg_loss, accuracy
 
 
-def train_model(model_name, device):
+def train_model(model_name, device, no_stop=False, best_optim=False):
     results_dir = Path(__file__).parent / "results"
     results_dir.mkdir(exist_ok=True, parents=True)
     log_file = (
@@ -96,14 +96,25 @@ def train_model(model_name, device):
     log(f"Test dataset: {test_dataset_size} samples, {test_batches} batches", log_file)
 
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(model.parameters(), lr=0.1, momentum=0.9, weight_decay=1e-4)
+
+    if best_optim:
+        optimizer = optim.AdamW(model.parameters(), lr=1e-3, weight_decay=1e-4)
+        log("Using AdamW optimizer with lr=1e-3", log_file)
+    else:
+        optimizer = optim.SGD(model.parameters(), lr=0.1, momentum=0.9, weight_decay=1e-4)
+        log("Using SGD optimizer with lr=0.1", log_file)
 
     max_iterations = 64000
     lr_decay_iterations = [32000, 48000]
     lr_decay_epochs = [it // train_batches for it in lr_decay_iterations]
     max_epochs = max_iterations // train_batches
+    if best_optim:
+        max_epochs = 2400
 
-    scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=lr_decay_epochs, gamma=0.1)
+    if best_optim:
+        scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=max_epochs)
+    else:
+        scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=lr_decay_epochs, gamma=0.1)
 
     log(
         (
@@ -118,7 +129,11 @@ def train_model(model_name, device):
     epoch = 0
     train_error_zero = False
 
-    while not train_error_zero and epoch < max_epochs:
+    while (
+        not train_error_zero
+        and (epoch < max_epochs or no_stop)
+        and (time.time() - start_time < int(3.8 * 3600))
+    ):
         epoch += 1
         model.train()
         train_loss = 0
@@ -203,6 +218,14 @@ def train_model(model_name, device):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str, choices=["resnet_cifar", "resnet_18"], required=True)
+    parser.add_argument(
+        "--no-stop", action="store_true", help="Don't stop training when max epochs is reached"
+    )
+    parser.add_argument(
+        "--best-optim",
+        action="store_true",
+        help="Change SGD to a better optim for faster convergence",
+    )
 
     # added only for dev purposes
     parser.add_argument(
@@ -210,4 +233,4 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    train_model(args.model, args.device)
+    train_model(args.model, args.device, no_stop=args.no_stop, best_optim=args.best_optim)
