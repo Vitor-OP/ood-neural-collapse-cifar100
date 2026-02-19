@@ -13,4 +13,4 @@ source /home/ensta/ensta-rian.santos/.venv/bin/activate
 
 cd /home/ensta/ensta-rian.santos/ood-neural-collapse-cifar100 || exit 1
 
-python3 train.py --model resnet_cifar --no-stop --best-optim --suffix adam_no_decay_1bs
+python3 train.py --suffix sgd
