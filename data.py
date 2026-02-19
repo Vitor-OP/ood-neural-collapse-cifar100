@@ -37,6 +37,35 @@ def get_cifar100_dataloaders():
     return train_loader, val_loader, test_loader
 
 
+def get_cifar100_dataloaders_strong_aug(batch_size=128):
+    # Stronger augmentation for best test accuracy
+    transform_train = transforms.Compose(
+        [
+            transforms.RandomCrop(32, padding=4),
+            transforms.RandomHorizontalFlip(),
+            transforms.AutoAugment(transforms.AutoAugmentPolicy.CIFAR10),
+            transforms.ToTensor(),
+        ]
+    )
+    transform_test = transforms.Compose([transforms.ToTensor()])
+
+    train_set = torchvision.datasets.CIFAR100(
+        root=root_path / "cifar100", train=True, download=True, transform=transform_train
+    )
+    train_size = 45000
+    val_size = 5000
+    train_subset, val_subset = torch.utils.data.random_split(
+        train_set, [train_size, val_size], generator=torch.Generator().manual_seed(42)
+    )
+    train_loader = torch.utils.data.DataLoader(train_subset, batch_size=batch_size, shuffle=True)
+    val_loader = torch.utils.data.DataLoader(val_subset, batch_size=batch_size, shuffle=False)
+    test_set = torchvision.datasets.CIFAR100(
+        root=root_path / "cifar100", train=False, download=True, transform=transform_test
+    )
+    test_loader = torch.utils.data.DataLoader(test_set, batch_size=batch_size, shuffle=False)
+    return train_loader, val_loader, test_loader
+
+
 def get_cifar100_dataloaders_no_aug(batch_size=128):
     # No augmentation — used for collapse mode to reach train error = 0 faster
     transform = transforms.Compose([transforms.ToTensor()])

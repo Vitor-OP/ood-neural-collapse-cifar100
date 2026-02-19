@@ -8,7 +8,11 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-from data import get_cifar100_dataloaders, get_cifar100_dataloaders_no_aug
+from data import (
+    get_cifar100_dataloaders,
+    get_cifar100_dataloaders_no_aug,
+    get_cifar100_dataloaders_strong_aug,
+)
 from resnet import ResidualBlock, ResNet_CIFAR
 
 
@@ -77,6 +81,13 @@ def train_model(model_name, device, mode="sgd", suffix="", patience=20):
         scheduler = None
         max_epochs = 10000  # run until train error = 0
         log("Collapse mode: no augmentation, Adam, no weight decay", log_file)
+    elif mode == "best":
+        # Strong augmentation + SGD + cosine annealing — maximizes test accuracy
+        train_loader, val_loader, test_loader = get_cifar100_dataloaders_strong_aug()
+        optimizer = optim.SGD(model.parameters(), lr=0.1, momentum=0.9, weight_decay=5e-4)
+        max_epochs = 300
+        scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=max_epochs)
+        log(f"Best mode: strong aug, SGD + cosine LR, early stop patience={patience}", log_file)
     else:
         # SGD with paper schedule + early stopping on val plateau
         train_loader, val_loader, test_loader = get_cifar100_dataloaders()
@@ -85,7 +96,6 @@ def train_model(model_name, device, mode="sgd", suffix="", patience=20):
         lr_decay_iterations = [32000 * 2, 48000 * 2]
         lr_decay_epochs = [it // train_batches for it in lr_decay_iterations]
         scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=lr_decay_epochs, gamma=0.1)
-        # max_epochs = 64000 // train_batches
         max_epochs = 10000
         log(
             f"SGD mode: LR decay at epochs {lr_decay_epochs}, early stop patience={patience}",
@@ -207,9 +217,9 @@ if __name__ == "__main__":
     parser.add_argument(
         "--mode",
         type=str,
-        choices=["sgd", "collapse"],
+        choices=["sgd", "collapse", "best"],
         default="sgd",
-        help="sgd: good performance run with early stopping | collapse: drive train error to 0",
+        help="sgd: paper schedule + early stop | best: strong aug + cosine LR | collapse: drive train error to 0",
     )
     parser.add_argument("--patience", type=int, default=30, help="Early stop patience (sgd mode)")
     parser.add_argument(
