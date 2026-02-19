@@ -65,7 +65,7 @@ def evaluate(model, loader, criterion, device):
     return avg_loss, accuracy
 
 
-def train_model(model_name, device, no_stop=False, best_optim=False):
+def train_model(model_name, device, no_stop=False, best_optim=False, suffix=""):
     results_dir = Path(__file__).parent / "results"
     results_dir.mkdir(exist_ok=True, parents=True)
     log_file = (
@@ -98,7 +98,7 @@ def train_model(model_name, device, no_stop=False, best_optim=False):
     criterion = nn.CrossEntropyLoss()
 
     if best_optim:
-        optimizer = optim.AdamW(model.parameters(), lr=1e-3, weight_decay=1e-4)
+        optimizer = optim.AdamW(model.parameters(), lr=1e-3, weight_decay=0)
         log("Using AdamW optimizer with lr=1e-3", log_file)
     else:
         optimizer = optim.SGD(model.parameters(), lr=0.1, momentum=0.9, weight_decay=1e-4)
@@ -132,7 +132,7 @@ def train_model(model_name, device, no_stop=False, best_optim=False):
     while (
         not train_error_zero
         and (epoch < max_epochs or no_stop)
-        and (time.time() - start_time < int(3.8 * 3600))
+        and (time.time() - start_time < int(3.95 * 3600))
     ):
         epoch += 1
         model.train()
@@ -186,7 +186,7 @@ def train_model(model_name, device, no_stop=False, best_optim=False):
                 "val_acc": val_acc,
                 "test_acc": test_acc,
             }
-            save_path = results_dir / f"{model_name}_best.pth"
+            save_path = results_dir / f"{model_name}_best_{suffix}.pth"
             torch.save(checkpoint, save_path)
             log(
                 f"Saved best model with val acc: {val_acc:.2f}%, test acc: {test_acc:.2f}%",
@@ -202,7 +202,7 @@ def train_model(model_name, device, no_stop=False, best_optim=False):
         "val_acc": val_acc,
         "test_acc": test_acc,
     }
-    final_path = results_dir / f"{model_name}_final.pth"
+    final_path = results_dir / f"{model_name}_final_{suffix}.pth"
     torch.save(final_checkpoint, final_path)
     total_time = time.time() - start_time
     total_time_str = time.strftime("%H:%M:%S", time.gmtime(total_time))
@@ -231,6 +231,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--device", type=str, default="cuda" if torch.cuda.is_available() else "cpu"
     )
+    parser.add_argument("--suffix", type=str, default="", help="Suffix to append to model name")
     args = parser.parse_args()
 
     train_model(args.model, args.device, no_stop=args.no_stop, best_optim=args.best_optim)
