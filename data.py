@@ -2,6 +2,7 @@ from pathlib import Path
 
 import torch
 import torchvision
+import torchvision.datasets as datasets
 import torchvision.transforms as transforms
 
 root_path = Path(__file__).parent
@@ -34,3 +35,27 @@ def get_cifar100_dataloaders():
     )
     test_loader = torch.utils.data.DataLoader(test_set, batch_size=100, shuffle=False)
     return train_loader, val_loader, test_loader
+
+
+def get_svhn_dataloader(batch_size=100):
+    svhn_test = datasets.SVHN(
+        root=root_path / "svhn",
+        split="test",
+        download=True,
+        transform=transforms.Compose([transforms.ToTensor()]),
+    )
+    return torch.utils.data.DataLoader(svhn_test, batch_size=batch_size, shuffle=False)
+
+
+def get_textures_dataloader(batch_size=100):
+    transform = transforms.Compose(
+        [
+            transforms.Resize(32),
+            transforms.CenterCrop(32),
+            transforms.ToTensor(),
+        ]
+    )
+    textures_test = datasets.DTD(
+        root=root_path / "textures", split="test", download=True, transform=transform
+    )
+    return torch.utils.data.DataLoader(textures_test, batch_size=batch_size, shuffle=False)
