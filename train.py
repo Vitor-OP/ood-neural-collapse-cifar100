@@ -234,4 +234,10 @@ if __name__ == "__main__":
     parser.add_argument("--suffix", type=str, default="", help="Suffix to append to model name")
     args = parser.parse_args()
 
-    train_model(args.model, args.device, no_stop=args.no_stop, best_optim=args.best_optim)
+    train_model(
+        args.model,
+        args.device,
+        no_stop=args.no_stop,
+        best_optim=args.best_optim,
+        suffix=args.suffix,
+    )

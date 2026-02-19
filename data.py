@@ -26,7 +26,7 @@ def get_cifar100_dataloaders():
         train_set, [train_size, val_size], generator=torch.Generator().manual_seed(42)
     )
 
-    train_loader = torch.utils.data.DataLoader(train_subset, batch_size=128, shuffle=True)
+    train_loader = torch.utils.data.DataLoader(train_subset, batch_size=1, shuffle=True)
     val_loader = torch.utils.data.DataLoader(val_subset, batch_size=100, shuffle=False)
 
     test_set = torchvision.datasets.CIFAR100(
