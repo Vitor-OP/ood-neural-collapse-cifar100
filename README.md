@@ -1,57 +1,71 @@
 # OOD Detection & Neural Collapse — CIFAR-100
 
 Practical assignment for **5IA23 – Deep Learning Based Computer Vision** at ENSTA Paris.
-Trains a ResNet on CIFAR-100 and evaluates OOD detection methods.
+Trains a ResNet on CIFAR-100 and evaluates OOD detection methods (Softmax, Max Logit, Energy, Mahalanobis, ViM, NECO).
 
 ---
 
 ## Setup
 
 ```bash
-pip install torch torchvision scikit-learn scipy
+pip install torch torchvision scikit-learn scipy tabulate
 ```
 
 ---
 
 ## Scripts
 
-### `train.py` — Train the model
-```bash
-python train.py --model resnet_cifar [--best-optim] [--no-stop] [--suffix <tag>]
+### `train.py`
+
 ```
-- `resnet_cifar`: 3-stack ResNet adapted for 32×32 CIFAR input
-- `--best-optim`: use AdamW + cosine LR instead of SGD
-- Saves to `results/resnet_cifar_best_<suffix>.pth` and `results/resnet_cifar_final_<suffix>.pth`
-- Checkpoint keys: `model_state_dict`, `optimizer_state_dict`, `train_acc`, `val_acc`, `test_acc`, `epoch`
+python train.py [--model resnet_cifar] [--mode sgd|best|collapse] [--suffix <tag>] [--patience <n>] [--device <cpu|cuda>]
+```
+
+| Mode | Optimizer | Augmentation | Stopping |
+|------|-----------|--------------|----------|
+| `sgd` | SGD lr=0.1, multi-step LR (paper schedule) | crop + hflip | early stop on val plateau |
+| `best` | SGD lr=0.1, CosineAnnealingLR T_max=300 | AutoAugment | early stop within 300 epochs |
+| `collapse` | Adam lr=1e-3, no WD | none | until train\_acc = 100% |
+
+Saves to `results/resnet_cifar_best_<suffix>.pth` and `results/resnet_cifar_final_<suffix>.pth`.
+Checkpoint keys: `epoch`, `model_state_dict`, `optimizer_state_dict`, `train_acc`, `val_acc`, `test_acc`.
+Training curves (loss, acc, lr per epoch) saved to `results/train_<timestamp>_resnet_cifar_curves.csv`.
 
 ---
 
-### `run_networks.py` — Extract and save features to CSV
-```bash
-python run_networks.py [--checkpoint results/resnet_cifar_best_adam.pth] [--ood svhn textures]
+### `run_networks.py`
+
 ```
-- Runs the model on train/test ID (CIFAR-100) and OOD dataloaders
-- Extracts penultimate layer features (64-dim) via a forward hook on `fc`
-- Saves CSVs to `results/<checkpoint_stem>/`:
-  - `ID_cifar100_train.csv` — 45k train samples, columns `ct0..ct63, label`
-  - `ID_cifar100_test.csv` — 10k test samples
-  - `OOD_<name>_test.csv` — OOD test samples (SVHN and/or Textures)
-- OOD datasets are auto-downloaded on first run
+python run_networks.py [--checkpoint results/resnet_cifar_best_<suffix>.pth] [--ood svhn textures]
+```
+
+Extracts 64-dim penultimate features via a forward hook on `fc` and saves CSVs to `results/<checkpoint_stem>/`:
+
+- `ID_cifar100_train.csv` — 45k training samples
+- `ID_cifar100_test.csv` — 10k test samples
+- `OOD_svhn_test.csv`, `OOD_textures_test.csv` — OOD test samples
+
+CSV format: columns `ct0..ct63, label`. OOD datasets auto-download on first run.
 
 ---
 
-### `ood_methods.py` — Evaluate OOD detection methods
-```bash
-python ood_methods.py [--checkpoint results/resnet_cifar_best_adam.pth] [--ood svhn textures]
+### `ood_methods.py`
+
 ```
-- Loads CSVs produced by `run_networks.py`
-- Computes logits as `features @ W.T + b` and runs five scoring methods:
-  - **Softmax** — max softmax probability
-  - **Max Logit** — max raw logit
-  - **Energy** — `-logsumexp(logits)`
-  - **Mahalanobis** — min distance to class-conditional Gaussians (shared precision matrix)
-  - **ViM** — residual norm in null space of feature covariance + energy
-- Prints AUROC and FPR@95%TPR per method per OOD dataset
+python ood_methods.py [--checkpoint results/resnet_cifar_best_<suffix>.pth] [--ood svhn textures]
+                      [--neco-dim 10] [--latex] [--caption <str>] [--label <str>]
+```
+
+Loads CSVs from `results/<checkpoint_stem>/`, recomputes logits as `features @ W.T + b`, and evaluates:
+
+- **Softmax** — max softmax probability
+- **Max Logit** — max raw logit
+- **Energy** — `logsumexp(logits)`
+- **Mahalanobis** — min Mahalanobis distance to class-conditional Gaussians (shared precision, class-centered)
+- **ViM** — null-space residual norm + energy; null space = eigenvectors beyond top 75% of feature dims
+- **NECO** — fraction of StandardScaler-normalised feature norm captured by the top `--neco-dim` PCA components
+
+Prints AUROC and FPR@95%TPR. Pass `--latex` for LaTeX `tabular` output (side-by-side when two OOD sets).
 
 ---
 
@@ -59,26 +73,28 @@ python ood_methods.py [--checkpoint results/resnet_cifar_best_adam.pth] [--ood s
 
 | File | Purpose |
 |------|---------|
-| `resnet.py` | `ResNet_CIFAR` and `ResNet_ImageNet` architectures |
-| `data.py` | Dataloaders for CIFAR-100, SVHN, Textures |
-| `train.py` | Training loop |
+| `resnet.py` | `ResNet_CIFAR` (3-stack, 64-dim) and `ResNet_ImageNet` architectures |
+| `data.py` | Dataloaders: CIFAR-100 (3 variants), SVHN, Textures/DTD |
+| `train.py` | Training loop with three modes |
 | `run_networks.py` | Feature extraction → CSV |
 | `ood_methods.py` | OOD scoring and evaluation |
-| `utils.py` | CSV save/load helpers |
+| `utils.py` | `save_features_to_csv` / `load_features_from_csv` |
 
 ---
 
 ## Typical Workflow
 
 ```bash
-# 1. Train
-python train.py --model resnet_cifar --best-optim --suffix adam
+# Train
+python train.py --mode best --suffix best
+python train.py --mode collapse --suffix collapse
 
-# 2. Extract features (downloads OOD datasets automatically)
-python run_networks.py --ood svhn textures
+# Extract features once per checkpoint
+python run_networks.py --checkpoint results/resnet_cifar_best_best.pth --ood svhn textures
 
-# 3. Evaluate
-python ood_methods.py --ood svhn textures
+# Evaluate
+python ood_methods.py --checkpoint results/resnet_cifar_best_best.pth --ood svhn textures
+python ood_methods.py --checkpoint results/resnet_cifar_best_best.pth --ood svhn textures --latex
 ```
 
 ---
