@@ -14,9 +14,15 @@ def get_cifar100_dataloaders():
             transforms.RandomCrop(32, padding=4),
             transforms.RandomHorizontalFlip(),
             transforms.ToTensor(),
+            transforms.Normalize((0.5071, 0.4867, 0.4408), (0.2675, 0.2565, 0.2761)),
         ]
     )
-    transform_test = transforms.Compose([transforms.ToTensor()])
+    transform_test = transforms.Compose(
+        [
+            transforms.ToTensor(),
+            transforms.Normalize((0.5071, 0.4867, 0.4408), (0.2675, 0.2565, 0.2761)),
+        ]
+    )
 
     train_set = torchvision.datasets.CIFAR100(
         root=root_path / "cifar100", train=True, download=True, transform=transform_train
@@ -45,9 +51,15 @@ def get_cifar100_dataloaders_strong_aug(batch_size=128):
             transforms.RandomHorizontalFlip(),
             transforms.AutoAugment(transforms.AutoAugmentPolicy.CIFAR10),
             transforms.ToTensor(),
+            transforms.Normalize((0.5071, 0.4867, 0.4408), (0.2675, 0.2565, 0.2761)),
         ]
     )
-    transform_test = transforms.Compose([transforms.ToTensor()])
+    transform_test = transforms.Compose(
+        [
+            transforms.ToTensor(),
+            transforms.Normalize((0.5071, 0.4867, 0.4408), (0.2675, 0.2565, 0.2761)),
+        ]
+    )
 
     train_set = torchvision.datasets.CIFAR100(
         root=root_path / "cifar100", train=True, download=True, transform=transform_train
@@ -68,7 +80,12 @@ def get_cifar100_dataloaders_strong_aug(batch_size=128):
 
 def get_cifar100_dataloaders_no_aug(batch_size=128):
     # No augmentation — used for collapse mode to reach train error = 0 faster
-    transform = transforms.Compose([transforms.ToTensor()])
+    transform = transforms.Compose(
+        [
+            transforms.ToTensor(),
+            transforms.Normalize((0.5071, 0.4867, 0.4408), (0.2675, 0.2565, 0.2761)),
+        ]
+    )
 
     train_set = torchvision.datasets.CIFAR100(
         root=root_path / "cifar100", train=True, download=True, transform=transform
@@ -94,7 +111,12 @@ def get_svhn_dataloader(batch_size=100):
         root=root_path / "svhn",
         split="test",
         download=True,
-        transform=transforms.Compose([transforms.ToTensor()]),
+        transform=transforms.Compose(
+            [
+                transforms.ToTensor(),
+                transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+            ]
+        ),
     )
     return torch.utils.data.DataLoader(svhn_test, batch_size=batch_size, shuffle=False)
 
@@ -105,6 +127,7 @@ def get_textures_dataloader(batch_size=100):
             transforms.Resize(32),
             transforms.CenterCrop(32),
             transforms.ToTensor(),
+            transforms.Normalize((0.5071, 0.4867, 0.4408), (0.2675, 0.2565, 0.2761)),
         ]
     )
     textures_test = datasets.DTD(
