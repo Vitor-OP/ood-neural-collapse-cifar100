@@ -69,6 +69,23 @@ Prints AUROC and FPR@95%TPR. Pass `--latex` for LaTeX `tabular` output (side-by-
 
 ---
 
+### `neural_collapse.py`
+
+```
+python neural_collapse.py [--checkpoint results/resnet_cifar_best_<suffix>.pth]
+```
+
+Requires CSVs from `run_networks.py`. Computes and saves four figures to `results/<checkpoint_stem>/` using training-set features:
+
+| Figure | Metric |
+|--------|--------|
+| `nc1_within_class_variance.png` | Per-class mean squared distance to class mean + NC1 ratio (within/between variance) |
+| `nc2_mean_cosine_similarities.png` | Histogram of pairwise cosine sims between centered class means; ETF ideal = −1/(C−1) ≈ −0.0101 |
+| `nc3_weight_mean_alignment.png` | Cosine similarity between W[c] and μ_c per class (NC3 self-duality) |
+| `class_mean_distances.png` | 100×100 heatmap of pairwise L2 distances between class means |
+
+---
+
 ## File Overview
 
 | File | Purpose |
@@ -78,6 +95,7 @@ Prints AUROC and FPR@95%TPR. Pass `--latex` for LaTeX `tabular` output (side-by-
 | `train.py` | Training loop with three modes |
 | `run_networks.py` | Feature extraction → CSV |
 | `ood_methods.py` | OOD scoring and evaluation |
+| `neural_collapse.py` | NC1/NC2/NC3 metrics and visualizations |
 | `utils.py` | `save_features_to_csv` / `load_features_from_csv` |
 
 ---
@@ -92,9 +110,13 @@ python train.py --mode collapse --suffix collapse
 # Extract features once per checkpoint
 python run_networks.py --checkpoint results/resnet_cifar_best_best.pth --ood svhn textures
 
-# Evaluate
+# Evaluate OOD
 python ood_methods.py --checkpoint results/resnet_cifar_best_best.pth --ood svhn textures
 python ood_methods.py --checkpoint results/resnet_cifar_best_best.pth --ood svhn textures --latex
+
+# Neural Collapse analysis
+python neural_collapse.py --checkpoint results/resnet_cifar_best_best.pth
+python neural_collapse.py --checkpoint results/resnet_cifar_best_collapse.pth
 ```
 
 ---
