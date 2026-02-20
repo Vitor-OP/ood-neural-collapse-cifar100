@@ -1,0 +1,10 @@
+[2026-02-20 11:12:53] Starting training | model=resnet_cifar | mode=best
+[2026-02-20 11:12:53] Device: cuda
+[2026-02-20 11:12:55] Best mode: strong aug, SGD + cosine LR, early stop patience=30
+[2026-02-20 11:12:55] Train: 45000 | Val: 5000 | Test: 10000
+[2026-02-20 11:13:09] Epoch 1 | Train Loss: 4.6035 | Train Acc: 1.16% | Val Loss: 4.6025 | Val Acc: 1.24% | LR: 0.100000 | Elapsed: 00:00:14
+[2026-02-20 11:13:24] Epoch 2 | Train Loss: 4.6000 | Train Acc: 1.69% | Val Loss: 4.5945 | Val Acc: 2.84% | LR: 0.099999 | Elapsed: 00:00:29
+[2026-02-20 11:13:38] Epoch 3 | Train Loss: 4.5949 | Train Acc: 2.37% | Val Loss: 4.5928 | Val Acc: 2.48% | LR: 0.099998 | Elapsed: 00:00:43
+[2026-02-20 11:13:52] Epoch 4 | Train Loss: 4.5947 | Train Acc: 2.42% | Val Loss: 4.5938 | Val Acc: 2.94% | LR: 0.099996 | Elapsed: 00:00:57
+[2026-02-20 11:14:06] Epoch 5 | Train Loss: 4.5944 | Train Acc: 2.42% | Val Loss: 4.5916 | Val Acc: 2.56% | LR: 0.099994 | Elapsed: 00:01:11
+[2026-02-20 11:14:20] Epoch 6 | Train Loss: 4.5941 | Train Acc: 2.50% | Val Loss: 4.5955 | Val Acc: 2.58% | LR: 0.099991 | Elapsed: 00:01:24
