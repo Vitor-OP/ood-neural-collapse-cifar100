@@ -85,7 +85,7 @@ def train_model(model_name, device, mode="sgd", suffix="", patience=20):
         # Strong augmentation + SGD + cosine annealing — maximizes test accuracy
         train_loader, val_loader, test_loader = get_cifar100_dataloaders_strong_aug()
         optimizer = optim.SGD(model.parameters(), lr=0.1, momentum=0.9, weight_decay=5e-4)
-        max_epochs = 300
+        max_epochs = 1000
         scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=max_epochs)
         log(f"Best mode: strong aug, SGD + cosine LR, early stop patience={patience}", log_file)
     else:
@@ -161,7 +161,7 @@ def train_model(model_name, device, mode="sgd", suffix="", patience=20):
         curves_fh.flush()
 
         # Save best val checkpoint (SGD mode only)
-        if mode == "sgd" and val_acc > best_val_acc:
+        if (mode == "sgd" or mode == "best") and val_acc > best_val_acc:
             best_val_acc = val_acc
             epochs_no_improve = 0
             _, test_acc = evaluate(model, test_loader, criterion, device)
