@@ -87,7 +87,7 @@ class ResNet_ImageNet(nn.Module):
         self.stack4 = self._make_stack(block, 512, num_blocks[3], first_block_stride=2)
         self.avg_pool = nn.AdaptiveAvgPool2d((1, 1))
         self.fc = nn.Linear(512, num_classes)
-        self.softmax = nn.Softmax(dim=1)
+        # self.softmax = nn.Softmax(dim=1)
 
     def _make_stack(self, block, out_channels, num_blocks, first_block_stride):
         strides = [first_block_stride] + [1] * (num_blocks - 1)
@@ -106,7 +106,7 @@ class ResNet_ImageNet(nn.Module):
         out = self.avg_pool(out)
         out = torch.flatten(out, 1)
         out = self.fc(out)
-        out = self.softmax(out)
+        # out = self.softmax(out)
         return out
 
 
@@ -122,7 +122,7 @@ class ResNet_CIFAR(nn.Module):
         self.stack3 = self._make_stack(block, 64, num_blocks[2], first_block_stride=2)
         self.avg_pool = nn.AdaptiveAvgPool2d((1, 1))
         self.fc = nn.Linear(64, num_classes)
-        self.softmax = nn.Softmax(dim=1)
+        # self.softmax = nn.Softmax(dim=1)
 
     def _make_stack(self, block, out_channels, num_blocks, first_block_stride):
         strides = [first_block_stride] + [1] * (num_blocks - 1)
@@ -140,7 +140,7 @@ class ResNet_CIFAR(nn.Module):
         out = self.avg_pool(out)
         out = torch.flatten(out, 1)
         out = self.fc(out)
-        out = self.softmax(out)
+        # out = self.softmax(out)
         return out
 
 
